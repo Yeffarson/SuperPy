@@ -93,12 +93,26 @@ def validate_and_convert_date(date_str):
 
 #   UTILS
 def generate_id():
-    # Genereert een unieke ID bestaande uit 6 willekeurige cijfers
     try:
-        random_digits = [str(random.randint(0, 9)) for _ in range(6)]
-        return ''.join(random_digits)
+        # Verzamel alle bestaande ID's
+        existing_ids = set()
+        try:
+            with open(BOUGHT_FILE_PATH, 'r') as bought_file, open(SOLD_FILE_PATH, 'r') as sold_file:
+                bought_reader = csv.DictReader(bought_file)
+                sold_reader = csv.DictReader(sold_file)
+                existing_ids.update([row['ID'] for row in bought_reader])
+                existing_ids.update([row['ID'] for row in sold_reader])
+        except (IOError, OSError):
+            pass  # Bestanden zijn mogelijk niet toegankelijk of bestaan nog niet
+
+        # Genereer een unieke ID
+        while True:
+            random_id = ''.join([str(random.randint(0, 9)) for _ in range(6)])
+            if random_id not in existing_ids:
+                return random_id
+
     except Exception as e:
-        print(f"[red]Error while generating random digits: {e}")
+        print(f"[red]Error while generating ID: {e}[/red]")
         return None
 
 def display_current_date(title="Date", date_changed=False):
@@ -224,8 +238,6 @@ def calculate_report_for_single_date(target_date, is_range=False):
 
         # Voeg kolommen toe aan de tabel
         table.add_column("Product Name", justify="left")
-        table.add_column("Quantity Bought", justify="right")
-        table.add_column("Quantity Sold", justify="right")
         table.add_column("Current Stock", justify="right")
 
         # Vul de tabel met voorraadgegevens
@@ -237,8 +249,6 @@ def calculate_report_for_single_date(target_date, is_range=False):
             if stock > 0:
                 table.add_row(
                     product,
-                    str(bought_qty),
-                    str(sold_qty),
                     str(stock)
                 )
 
@@ -306,8 +316,8 @@ def calculate_revenue(start_date, end_date):
     return total_revenue
 
 #   REPORTS: INVENTORY
-def inventory_report(today, yesterday, date_arg, start_date, end_date):
-    # Bereken een voorraadrapport voor een specifieke datum of datumbereik.
+def inventory_report(today, yesterday, date_arg):
+    # Bereken een voorraadrapport voor een specifieke datum.
     try:
         # Rapport voor vandaag.
         if today:
@@ -324,15 +334,6 @@ def inventory_report(today, yesterday, date_arg, start_date, end_date):
                 raise ValueError("Invalid date format for 'date'")
             target_date = datetime.strptime(validated_date, '%Y-%m-%d').date()
             calculate_report_for_single_date(target_date)
-        # Rapport voor een datumbereik.
-        elif start_date and end_date:
-            validated_start_date = validate_and_convert_date(start_date)
-            validated_end_date = validate_and_convert_date(end_date)
-            if validated_start_date is None or validated_end_date is None:
-                raise ValueError("Invalid date format for 'start_date' or 'end_date'")
-            start_date = datetime.strptime(validated_start_date, '%Y-%m-%d').date()
-            end_date = datetime.strptime(validated_end_date, '%Y-%m-%d').date()
-            calculate_report_for_date_range(start_date, end_date)
         else:
             raise ValueError("No valid date parameter specified")
     except ValueError as ve:
@@ -670,8 +671,7 @@ def parsers():
     sell_parser.add_argument("--price", type=float, help="Selling price of the product")
 
     #   Commando's voor de subparser 'report'
-    report_parser = subparsers.add_parser(
-        "report", help="Generate different types of reports")
+    report_parser = subparsers.add_parser("report", help="Generate different types of reports")
     report_subparsers = report_parser.add_subparsers(dest="command_report")
 
     #   Commando's voor de report subparser 'inventory'
@@ -679,8 +679,6 @@ def parsers():
     inventory_subparser.add_argument("--today", action="store_true", help="Show inventory for today")
     inventory_subparser.add_argument("--yesterday", action="store_true", help="Show inventory for yesterday")
     inventory_subparser.add_argument("--date", help="Show inventory for a specific date (format: YYYY-MM-DD)")
-    inventory_subparser.add_argument("--start-date", help="Start date for the inventory report (format: YYYY-MM-DD)")
-    inventory_subparser.add_argument("--end-date", help="End date for the inventory report (format: YYYY-MM-DD)")
 
     #   Commando's voor de report subparser 'profit'
     profit_subparser = report_subparsers.add_parser("profit", help="Report profits")
@@ -741,9 +739,7 @@ def main():
         if args.command_report == "inventory":
             inventory_report(today=args.today,
                              yesterday=args.yesterday,
-                             date_arg=args.date,
-                             start_date=args.start_date,
-                             end_date=args.end_date)
+                             date_arg=args.date)
             
         # Winst rapport
         elif args.command_report == "profit":
