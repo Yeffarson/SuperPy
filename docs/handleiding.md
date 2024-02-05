@@ -31,7 +31,7 @@ SuperPy is een command-line tool voor het beheren van de voorraad van een superm
    Genereert een rapport van de huidige voorraad.
    - **Syntax**:
      ```bash
-     python main.py report inventory --[today|yesterday|date <YYYY-MM-DD>|start-date <YYYY-MM-DD> end-date <YYYY-MM-DD>]
+     python main.py report inventory --[today|yesterday|date <YYYY-MM-DD>]
      ```
    - **Voorbeelden**:
      - Voor vandaag:
@@ -41,10 +41,6 @@ SuperPy is een command-line tool voor het beheren van de voorraad van een superm
      - Voor een specifieke datum:
        ```bash
        python main.py report inventory --date "2024-01-01"
-       ```
-     - Voor een datumbereik:
-       ```bash
-       python main.py report inventory --start-date "2024-01-01" --end-date "2024-01-31"
        ```
 
 4. **Winst Rapport (`report profit`)**:
