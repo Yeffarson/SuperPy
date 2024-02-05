@@ -3,8 +3,7 @@
 
 Voor de werking videos volgen nog!
 - Werking in PyCharm
-- Werking in VS Code
-  https://vimeo.com/909864134
+- Werking in VS Code --> https://vimeo.com/909864134
   
 - Werking in ReplIt
 
